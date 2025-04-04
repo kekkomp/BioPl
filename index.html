@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanner Biodegradabilità</title>
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    #reader {
+      width: 300px;
+      margin: auto;
+    }
+    #result {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Scanner di Biodegradabilità</h1>
+  <p>Inquadra un codice QR sulla plastica per scoprirne la sostenibilità</p>
+  <div id="reader"></div>
+  <div id="result">Aspettando scansione...</div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const resultEl = document.getElementById("result");
+
+      function mostraLivello(codice) {
+        const livelli = {
+          "PLA123": 9,
+          "PET456": 3,
+          "BIO789": 10,
+          "PVC999": 2
+        };
+
+        const livello = livelli[codice] ?? "Codice non riconosciuto";
+        resultEl.textContent = `Codice: ${codice} – Livello di biodegradabilità: ${livello}`;
+      }
+
+      const scanner = new Html5Qrcode("reader");
+      scanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: 250
+        },
+        qrCodeMessage => {
+          scanner.stop();
+          mostraLivello(qrCodeMessage);
+        },
+        errorMessage => {
+          // Errore silenzioso
+        }
+      );
+    });
+  </script>
+</body>
+</html>
