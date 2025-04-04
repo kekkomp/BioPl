@@ -2,62 +2,78 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scanner Biodegradabilità</title>
-  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scanner Bottiglie</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 2rem;
+      background-color: #f4f4f4;
     }
-    #reader {
-      width: 300px;
+    #scanner-container {
+      width: 100%;
+      max-width: 400px;
       margin: auto;
     }
     #result {
-      font-size: 1.2rem;
       margin-top: 1rem;
+      font-size: 1.2rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    video {
+      width: 100%;
+      border-radius: 10px;
+      border: 2px solid #333;
     }
   </style>
 </head>
 <body>
-  <h1>Scanner di Biodegradabilità</h1>
-  <p>Inquadra un codice QR sulla plastica per scoprirne la sostenibilità</p>
-  <div id="reader"></div>
-  <div id="result">Aspettando scansione...</div>
+  <h1>Scanner Bottiglie</h1>
+  <p>Inquadra il codice a barre sulla bottiglia per sapere quanto è sostenibile</p>
+  <div id="scanner-container"></div>
+  <div id="result">In attesa della scansione...</div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const resultEl = document.getElementById("result");
+    const livelli = {
+      "8001234567890": 3,
+      "8012345678901": 8,
+      "8023456789012": 10,
+      "8034567890123": 2
+    };
 
-      function mostraLivello(codice) {
-        const livelli = {
-          "PLA123": 9,
-          "PET456": 3,
-          "BIO789": 10,
-          "PVC999": 2
-        };
+    const resultDiv = document.getElementById("result");
 
-        const livello = livelli[codice] ?? "Codice non riconosciuto";
-        resultEl.textContent = `Codice: ${codice} – Livello di biodegradabilità: ${livello}`;
-      }
-
-      const scanner = new Html5Qrcode("reader");
-      scanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: 250
-        },
-        qrCodeMessage => {
-          scanner.stop();
-          mostraLivello(qrCodeMessage);
-        },
-        errorMessage => {
-          // Errore silenzioso
+    Quagga.init({
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: document.querySelector('#scanner-container'),
+        constraints: {
+          facingMode: "environment"
         }
-      );
+      },
+      decoder: {
+        readers: ["ean_reader"] // solo codici a barre (EAN)
+      }
+    }, function(err) {
+      if (err) {
+        console.error(err);
+        resultDiv.textContent = "Errore nell'avvio della fotocamera.";
+        return;
+      }
+      Quagga.start();
+    });
+
+    Quagga.onDetected(function(data) {
+      const code = data.codeResult.code;
+      const livello = livelli[code] ?? "Codice non riconosciuto";
+      resultDiv.textContent = `Codice: ${code} – Biodegradabilità: ${livello}`;
+      Quagga.stop(); // ferma dopo una lettura, si può riattivare se vuoi
     });
   </script>
 </body>
